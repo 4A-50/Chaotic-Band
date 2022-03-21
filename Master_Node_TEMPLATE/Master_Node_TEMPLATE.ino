@@ -1,19 +1,19 @@
 //WIFI ESP NOW Libary
 #include <WifiEspNow.h>
 
-//The MIDI Libary
-#include <MIDI.h>
-MIDI_CREATE_DEFAULT_INSTANCE();
-
-//The PEER Class
-#include <Peer.h>
-
 //Picks The Right WIFI Libary For ESP Architecture
 #if defined(ARDUINO_ARCH_ESP8266)
   #include <ESP8266WiFi.h>
 #elif defined(ARDUINO_ARCH_ESP32)
   #include <WiFi.h>
 #endif
+
+//The MIDI Libary
+#include <MIDI.h>
+MIDI_CREATE_DEFAULT_INSTANCE();
+
+//The PEER Class
+//#include <Peer.h>
 
 //The Instrument Mac Addresses
 //Should Be An Array OF Peer's But IDK Why That Isn't Working So This Will Have To Do For Now
@@ -26,12 +26,12 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
   String noteVal = "";     String velVal = "";     String chanVal = "";
   
   //Just Prints The Sender MAC Address
-  Serial.printf("Message from %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  //Serial.printf("Message from %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
   //Loops Though All The Messages Data
   for (int i = 0; i < static_cast<int>(count); ++i) {
     //Prints The Current Value
-    Serial.print(static_cast<char>(buf[i]));
+    //Serial.print(static_cast<char>(buf[i]));
 
     //Checks If The Current Message Char Is A Digit Or Not
     if(isDigit(static_cast<char>(buf[i]))){
@@ -65,10 +65,13 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
   }
   
   //Finishes The Line In The Serial Monitor
-  Serial.println();
+  //Serial.println();
 
   //Plays The MIDI Note
   MIDI.sendNoteOn(noteVal.toInt(), velVal.toInt(), chanVal.toInt());
+
+  delay(250);
+  MIDI.sendNoteOn(noteVal.toInt(), 0, chanVal.toInt());
 }
 
 void setup(){
