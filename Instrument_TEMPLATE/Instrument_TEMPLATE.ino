@@ -11,12 +11,6 @@
 //Master Mac Adress
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
 
-//PIR PIN
-int pirPin = 5;
-
-//Time Since Last Motion Detected
-long lastMotionTime = 0;
-
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
   //Message Holder
@@ -60,25 +54,10 @@ void setup() {
 }
 
 void loop(){
-  //Checks If Motion Has Been Detected And That It Has Been Enough Time Since The Last Reading
-  if (digitalRead(pirPin) == HIGH && millis() - lastMotionTime > 10000) {
-    //Turns The LED On
-    digitalWrite(LED_BUILTIN, LOW); //For Some Reason On The NODEMCU LOW IS Actually On And HIGH Is OFF
-
-    //Prints To Serial And Sends A MSG To Master
-    Serial.println("Motion Detected");
-    SendMIDIMSG(500, 127, 1, 250);
-
-    //Sets The Current Time To The Last Time
-    lastMotionTime = millis();
-
-    //Waits Then Turns The LED Off
-    delay(1000);
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
+  
 }
 
-//Sends A Message To The Master That It's Sensed Movement
+//Sends A Message To The Master
 void SendMIDIMSG(int note, int velocity, int mChannel, int playTime){
   //Creates A Buffer With A Size Of 60
   char msg[60];

@@ -15,6 +15,11 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 //The PEER Class
 //#include <Peer.h>
 
+//List Libary
+#include <List.hpp>
+
+//List<MIDINote> playingNotes;
+
 //The Instrument Mac Addresses
 //Should Be An Array OF Peer's But IDK Why That Isn't Working So This Will Have To Do For Now
 static uint8_t PEER1[]{0x42, 0x91, 0x51, 0x51, 0x70, 0x5F};
@@ -22,8 +27,8 @@ static uint8_t PEER1[]{0x42, 0x91, 0x51, 0x51, 0x70, 0x5F};
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
   //Var Holders To Write The Buffer Data Too
-  bool noteBool = false;   bool velBool = false;   bool chanBool = false;
-  String noteVal = "";     String velVal = "";     String chanVal = "";
+  bool noteBool = false;   bool velBool = false;   bool chanBool = false;   bool timeBool = false;
+  String noteVal = "";     String velVal = "";     String chanVal = "";     String timeVal = "";
   
   //Just Prints The Sender MAC Address
   //Serial.printf("Message from %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
@@ -44,22 +49,34 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
       if(chanBool == true){
         chanVal += static_cast<char>(buf[i]);
       }
+      if(timeBool == true){
+        chanVal += static_cast<char>(buf[i]);
+      }
     }else{
       //Works Out What String To Write To
       if(static_cast<char>(buf[i]) == 'N'){
         noteBool = true;
         velBool = false;
         chanBool = false;
+        timeBool = false;
       }
       if(static_cast<char>(buf[i]) == 'V'){
         noteBool = false;
         velBool = true;
         chanBool = false;
+        timeBool = false;
       }
       if(static_cast<char>(buf[i]) == 'C'){
         noteBool = false;
         velBool = false;
         chanBool = true;
+        timeBool = false;
+      }
+      if(static_cast<char>(buf[i]) == 'T'){
+        noteBool = false;
+        velBool = false;
+        chanBool = false;
+        timeBool = true;
       }
     }
   }
@@ -67,11 +84,21 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
   //Finishes The Line In The Serial Monitor
   //Serial.println();
 
-  //Plays The MIDI Note
-  MIDI.sendNoteOn(noteVal.toInt(), velVal.toInt(), chanVal.toInt());
+  if(noteVal.toInt() == 500){
+    ActivateLights();
 
-  delay(250);
-  MIDI.sendNoteOn(noteVal.toInt(), 0, chanVal.toInt());
+    //Plays The MIDI Note
+    MIDI.sendNoteOn(36, velVal.toInt(), chanVal.toInt());
+
+    delay(250);
+    MIDI.sendNoteOn(36, 0, chanVal.toInt());
+  }else{
+    //Plays The MIDI Note
+    MIDI.sendNoteOn(noteVal.toInt(), velVal.toInt(), chanVal.toInt());
+
+    delay(250);
+    MIDI.sendNoteOn(noteVal.toInt(), 0, chanVal.toInt()); 
+  }
 }
 
 void setup(){
@@ -106,7 +133,7 @@ void loop(){
 
 //Sends A Message To All Instruments To Light Up
 void ActivateLights(){
-  //Creates A Buffer With A Szie Of 60
+  //Creates A Buffer With A Size Of 60
   char msg[60];
   //Writes The Info To Buffer Whilst Getting It's Size
   int len = snprintf(msg, sizeof(msg), "Light_On");
