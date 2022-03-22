@@ -12,13 +12,36 @@
 #include <MIDI.h>
 MIDI_CREATE_DEFAULT_INSTANCE();
 
-//The PEER Class
-//#include <Peer.h>
+//The Peer Class
+class Peer{
+  public:
+    uint8_t PEER[6];
+
+    Peer(uint8_t _peer[6]){
+      for(int i = 0; i < 6; i++){
+        PEER[i] = _peer[i];
+      }
+    }
+};
 
 //List Libary
 #include <List.hpp>
 
-//List<MIDINote> playingNotes;
+//PlayingNote Class
+class PlayingNote{
+  public:
+    int noteVal;
+    int timeVal;
+    int chanVal;
+
+    PlayingNote(int _nV, int _tV, int _cV){
+      noteVal = _nV;
+      timeVal = _tV;
+      chanVal = _cV;
+    }
+};
+
+List<PlayingNote> playingNotes;
 
 //The Instrument Mac Addresses
 //Should Be An Array OF Peer's But IDK Why That Isn't Working So This Will Have To Do For Now
@@ -50,7 +73,7 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
         chanVal += static_cast<char>(buf[i]);
       }
       if(timeBool == true){
-        chanVal += static_cast<char>(buf[i]);
+        timeVal += static_cast<char>(buf[i]);
       }
     }else{
       //Works Out What String To Write To
@@ -89,15 +112,15 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
 
     //Plays The MIDI Note
     MIDI.sendNoteOn(36, velVal.toInt(), chanVal.toInt());
-
-    delay(250);
-    MIDI.sendNoteOn(36, 0, chanVal.toInt());
   }else{
     //Plays The MIDI Note
     MIDI.sendNoteOn(noteVal.toInt(), velVal.toInt(), chanVal.toInt());
+  }
 
-    delay(250);
-    MIDI.sendNoteOn(noteVal.toInt(), 0, chanVal.toInt()); 
+  if(timeVal.toInt() > 0){
+    timeVal = String(millis() + timeVal.toInt());
+
+    playingNotes.addLast(PlayingNote(noteVal.toInt(), timeVal.toInt(), chanVal.toInt()));
   }
 }
 
@@ -128,7 +151,15 @@ void setup(){
 }
 
 void loop(){
+  if(playingNotes.getSize() > 0){
+    for(int i = playingNotes.getSize() - 1; i >= 0; i--){
+      if(playingNotes[i].timeVal == millis()){
+        MIDI.sendNoteOn(playingNotes[i].noteVal, 0, playingNotes[i].chanVal);
 
+        playingNotes.remove(i);
+      }
+    }
+  }
 }
 
 //Sends A Message To All Instruments To Light Up
