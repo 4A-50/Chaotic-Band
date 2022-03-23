@@ -17,10 +17,13 @@ class Peer{
   public:
     uint8_t PEER[6];
 
-    Peer(uint8_t _peer[6]){
-      for(int i = 0; i < 6; i++){
-        PEER[i] = _peer[i];
-      }
+    Peer(uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6){
+      PEER[0] = _1;
+      PEER[1] = _2;
+      PEER[2] = _3;
+      PEER[3] = _4;
+      PEER[4] = _5;
+      PEER[5] = _6;
     }
 };
 
@@ -44,22 +47,17 @@ class PlayingNote{
 List<PlayingNote> playingNotes;
 
 //The Instrument Mac Addresses
-//Should Be An Array OF Peer's But IDK Why That Isn't Working So This Will Have To Do For Now
-static uint8_t PEER1[]{0x42, 0x91, 0x51, 0x51, 0x70, 0x5F};
+#define PEERLength 1
+static Peer PEERS[PEERLength]{Peer(0x42, 0x91, 0x51, 0x51, 0x70, 0x5F)};
 
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
   //Var Holders To Write The Buffer Data Too
   bool noteBool = false;   bool velBool = false;   bool chanBool = false;   bool timeBool = false;
   String noteVal = "";     String velVal = "";     String chanVal = "";     String timeVal = "";
-  
-  //Just Prints The Sender MAC Address
-  //Serial.printf("Message from %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
   //Loops Though All The Messages Data
   for (int i = 0; i < static_cast<int>(count); ++i) {
-    //Prints The Current Value
-    //Serial.print(static_cast<char>(buf[i]));
 
     //Checks If The Current Message Char Is A Digit Or Not
     if(isDigit(static_cast<char>(buf[i]))){
@@ -103,9 +101,6 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
       }
     }
   }
-  
-  //Finishes The Line In The Serial Monitor
-  //Serial.println();
 
   if(noteVal.toInt() == 500){
     ActivateLights();
@@ -117,10 +112,14 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
     MIDI.sendNoteOn(noteVal.toInt(), velVal.toInt(), chanVal.toInt());
   }
 
+  //If The Note Has An Off Time
   if(timeVal.toInt() > 0){
+    //Works Out The Off Time From Current Time
     timeVal = String(millis() + timeVal.toInt());
 
-    playingNotes.addLast(PlayingNote(noteVal.toInt(), timeVal.toInt(), chanVal.toInt()));
+    //Adds The Note To The List
+    PlayingNote newNote = PlayingNote(noteVal.toInt(), timeVal.toInt(), chanVal.toInt());
+    playingNotes.add(newNote);
   }
 }
 
@@ -143,19 +142,26 @@ void setup(){
 
   WifiEspNow.onReceive(MessageDecoder, nullptr);
 
-  ok = WifiEspNow.addPeer(PEER1);
-  if (!ok) {
-    Serial.println("WifiEspNow.addPeer() failed");
-    ESP.restart();
+  //Loops Through All The PEER MAC Adresses
+  for(int i = 0; i < PEERLength; i++){ 
+    ok = WifiEspNow.addPeer(PEERS[i].PEER);
+    if (!ok) {
+      Serial.println("WifiEspNow.addPeer() failed");
+      ESP.restart();
+    }
   }
 }
 
 void loop(){
+  //Checks That Their Are Notes That Need Stopping
   if(playingNotes.getSize() > 0){
+    //Loop Through Them All Backwards (Easier To Remove Items This Way)
     for(int i = playingNotes.getSize() - 1; i >= 0; i--){
+      //If The Notes Off Time Is Now
       if(playingNotes[i].timeVal == millis()){
+        //Send The Off Note
         MIDI.sendNoteOn(playingNotes[i].noteVal, 0, playingNotes[i].chanVal);
-
+        //Remove The Note From The List
         playingNotes.remove(i);
       }
     }
@@ -169,6 +175,9 @@ void ActivateLights(){
   //Writes The Info To Buffer Whilst Getting It's Size
   int len = snprintf(msg, sizeof(msg), "Light_On");
 
-  //Sends The Message Via The WIFIESPNOW Libary
-  WifiEspNow.send(PEER1, reinterpret_cast<const uint8_t*>(msg), len);
+  //Loops Through All The PEER MAC Adresses
+  for(int i = 0; i < PEERLength; i++){
+    //Sends The Message Via The WIFIESPNOW Libary
+    WifiEspNow.send(PEERS[i].PEER, reinterpret_cast<const uint8_t*>(msg), len);
+  }
 }
