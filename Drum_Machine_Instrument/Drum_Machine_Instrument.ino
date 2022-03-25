@@ -32,16 +32,38 @@ class RiffNote{
     }
 };
 
-#define RiffSize 6
+//Struct To Return Info
+struct PlayDrumRiffReturner{
+  int nextNote;
+  long nextPlayTime;
+};
 
+//Max Size For All Riffs
+#define RiffSize 3
+
+//Kick Riff Vars
+int nextKickRiffNote = 0;
+long lastKickPlayedTime = 0;
+
+//Kick Pin 1 Riff
 #define KickPin1 5
-RiffNote kickRiffOne[RiffSize] {RiffNote(36, 250, 1, 500), RiffNote(-1, 100, 1, 500), RiffNote(36, 250, 1, 500), RiffNote(-1, 100, 1, 500), RiffNote(36, 250, 1, 500), RiffNote(-1, 100, 1, 500)};
+RiffNote kickRiffOne[RiffSize] {RiffNote(36, 50, 1, 100), RiffNote(36, 50, 1, 100), RiffNote(-1, 50, 1, 250)};
 
+//Snare Riff Vars
+int nextSnareRiffNote = 0;
+long lastSnarePlayedTime = 0;
+
+//Snare Pin 1 Riff
 #define SnarePin1 13
-RiffNote snareRiffOne[RiffSize] {RiffNote(-1, 100, 1, 500), RiffNote(38, 250, 1, 500), RiffNote(-1, 100, 1, 500), RiffNote(38, 250, 1, 500), RiffNote(-1, 100, 1, 500), RiffNote(40, 250, 1, 500)};
+RiffNote snareRiffOne[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(38, 50, 1, 250)};
 
-int nextRiffNote = 0;
-long lastPlayedTime = 0;
+//Cymbal Riff Vars
+int nextCymbalRiffNote = 0;
+long lastCymbalPlayedTime = 0;
+
+//Cymball Pin 1 Riff
+#define CymbalPin1 15
+RiffNote cymbalRiffOne[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(49, 50, 1, 250)};
 
 //Master Mac Adress
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
@@ -90,15 +112,26 @@ void setup() {
   //Set Up The Drum Pins
   pinMode(KickPin1, INPUT_PULLUP);
   pinMode(SnarePin1, INPUT_PULLUP);
+  pinMode(CymbalPin1, INPUT_PULLUP);
 }
 
 void loop(){
   if(digitalRead(KickPin1) == LOW){
-    PlayDrumRiff(kickRiffOne);
+    PlayDrumRiffReturner ret = PlayDrumRiff(kickRiffOne, nextKickRiffNote, lastKickPlayedTime);
+    nextKickRiffNote = ret.nextNote;
+    lastKickPlayedTime = ret.nextPlayTime;
   }
 
   if(digitalRead(SnarePin1) == LOW){
-    PlayDrumRiff(snareRiffOne);
+    PlayDrumRiffReturner ret = PlayDrumRiff(snareRiffOne, nextSnareRiffNote, lastSnarePlayedTime);
+    nextSnareRiffNote = ret.nextNote;
+    lastSnarePlayedTime = ret.nextPlayTime;
+  }
+
+  if(digitalRead(CymbalPin1) == LOW){
+    PlayDrumRiffReturner ret = PlayDrumRiff(cymbalRiffOne, nextCymbalRiffNote, lastCymbalPlayedTime);
+    nextCymbalRiffNote = ret.nextNote;
+    lastCymbalPlayedTime = ret.nextPlayTime;
   }
 }
 
@@ -113,7 +146,7 @@ void SendMIDIMSG(int note, int velocity, int mChannel, int playTime){
   WifiEspNow.send(MASTERMAC, reinterpret_cast<const uint8_t*>(msg), len);
 }
 
-void PlayDrumRiff(RiffNote riffArray[]){
+PlayDrumRiffReturner PlayDrumRiff(RiffNote riffArray[], int nextRiffNote, long lastPlayedTime){
   if(nextRiffNote - 1 > 0){
     if(millis() > lastPlayedTime + riffArray[nextRiffNote - 1].pauseTime){
       if(riffArray[nextRiffNote].noteVal != -1){
@@ -122,27 +155,30 @@ void PlayDrumRiff(RiffNote riffArray[]){
       
       lastPlayedTime = millis();
       
-      if(nextRiffNote + 1 > RiffSize){
+      if(nextRiffNote + 1 >= RiffSize){
         nextRiffNote = 0;
       }else{
         nextRiffNote++;
       }
     }
   }else{
-    if(millis() > lastPlayedTime + riffArray[RiffSize].pauseTime){
+    if(millis() > lastPlayedTime + riffArray[RiffSize - 1].pauseTime){
       if(riffArray[nextRiffNote].noteVal != -1){
         SendMIDIMSG(riffArray[nextRiffNote].noteVal, GetUFDistance(), riffArray[nextRiffNote].chanVal, riffArray[nextRiffNote].timeVal);
       }
       
       lastPlayedTime = millis();
       
-      if(nextRiffNote + 1 > RiffSize){
+      if(nextRiffNote + 1 >= RiffSize){
         nextRiffNote = 0;
       }else{
         nextRiffNote++;
       }
     }
   }
+
+  PlayDrumRiffReturner retVal = {nextRiffNote, lastPlayedTime};
+  return retVal;
 }
 
 //Works Out The Distance The US Sensor Can See
