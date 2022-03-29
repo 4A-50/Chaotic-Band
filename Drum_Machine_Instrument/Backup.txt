@@ -28,7 +28,7 @@ bool calibrateable = true;
 int lastReadState = HIGH;
 
 //Max Length For The Ultrasonic Distance
-int maxLength = 30;
+int maxLength;
 
 //RiffNote Class
 class RiffNote{
@@ -99,6 +99,7 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
 
 void setup() {
   Serial.begin(9600);
+  delay(500);
 
   WiFi.persistent(false);
   WiFi.mode(WIFI_AP);
@@ -175,8 +176,8 @@ void loop(){
       //Flash RELAY Lights
 
       //Gets The Max Distance
-      maxLength = GetUFDistance();
-
+      maxLength = GetUFDistance(0);
+      
       //Adds The Max Length To The EEPROM
       EEPROM.put(0, maxLength);
       boolean ok1 = EEPROM.commit();
@@ -202,7 +203,7 @@ PlayDrumRiffReturner PlayDrumRiff(RiffNote riffArray[], int nextRiffNote, long l
   if(nextRiffNote - 1 > 0){
     if(millis() > lastPlayedTime + riffArray[nextRiffNote - 1].pauseTime){
       if(riffArray[nextRiffNote].noteVal != -1){
-        SendMIDIMSG(riffArray[nextRiffNote].noteVal, int(map(GetUFDistance(), 0, maxLength, 0, 127)), riffArray[nextRiffNote].chanVal, riffArray[nextRiffNote].timeVal);
+        SendMIDIMSG(riffArray[nextRiffNote].noteVal, GetUFDistance(1), riffArray[nextRiffNote].chanVal, riffArray[nextRiffNote].timeVal);
       }
       
       lastPlayedTime = millis();
@@ -216,7 +217,7 @@ PlayDrumRiffReturner PlayDrumRiff(RiffNote riffArray[], int nextRiffNote, long l
   }else{
     if(millis() > lastPlayedTime + riffArray[RiffSize - 1].pauseTime){
       if(riffArray[nextRiffNote].noteVal != -1){
-        SendMIDIMSG(riffArray[nextRiffNote].noteVal, int(map(GetUFDistance(), 0, maxLength, 0, 127)), riffArray[nextRiffNote].chanVal, riffArray[nextRiffNote].timeVal);
+        SendMIDIMSG(riffArray[nextRiffNote].noteVal, GetUFDistance(1), riffArray[nextRiffNote].chanVal, riffArray[nextRiffNote].timeVal);
       }
       
       lastPlayedTime = millis();
@@ -234,7 +235,7 @@ PlayDrumRiffReturner PlayDrumRiff(RiffNote riffArray[], int nextRiffNote, long l
 }
 
 //Works Out The Distance The US Sensor Can See
-int GetUFDistance(){
+int GetUFDistance(int retMode){
   //Clears the trigPin
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -249,7 +250,17 @@ int GetUFDistance(){
   //Calculate the distance
   float distance = duration * SOUND_VELOCITY/2;
 
-  return distance;
+  if(retMode = 0){
+    return distance;
+  }
+  
+  if(retMode = 1){
+    if(distance > maxLength){
+      distance = maxLength;
+    }
+    
+    return int(map(distance, 0, maxLength, 0, 127));
+  }
 }
 
 void CancelCalibration(){
