@@ -56,28 +56,52 @@ struct PlayDrumRiffReturner{
 #define RiffSize 3
 
 //Kick Riff Vars
-int nextKickRiffNote = 0;
 long lastKickPlayedTime = 0;
+int nextKickRiffNote = 0;
 
 //Kick Pin 1 Riff
 #define KickPin1 5
 RiffNote kickRiffOne[RiffSize] {RiffNote(125, 50, 1, 100), RiffNote(125, 50, 1, 100), RiffNote(124, 50, 1, 250)};
 
+//Kick Pin 2 Riff
+#define KickPin2 1
+RiffNote kickRiffTwo[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(124, 50, 1, 100), RiffNote(124, 50, 1, 250)};
+
+//Kick Pin 3 Riff
+#define KickPin3 10
+RiffNote kickRiffThree[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(124, 50, 1, 100), RiffNote(124, 50, 1, 250)};
+
 //Snare Riff Vars
-int nextSnareRiffNote = 0;
 long lastSnarePlayedTime = 0;
+int nextSnareRiffNote = 0;
 
 //Snare Pin 1 Riff
 #define SnarePin1 13
 RiffNote snareRiffOne[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(127, 50, 1, 250)};
 
+//Snare Pin 2 Riff
+#define SnarePin2 4
+RiffNote snareRiffTwo[RiffSize] {RiffNote(127, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 250)};
+
+//Snare Pin 3 Riff
+#define SnarePin3 9
+RiffNote snareRiffThree[RiffSize] {RiffNote(127, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 250)};
+
 //Cymbal Riff Vars
-int nextCymbalRiffNote = 0;
 long lastCymbalPlayedTime = 0;
+int nextCymbalRiffNote = 0;
 
 //Cymball Pin 1 Riff
 #define CymbalPin1 3
 RiffNote cymbalRiffOne[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(123, 50, 1, 250)};
+
+//Cymball Pin 2 Riff
+#define CymbalPin2 2
+RiffNote cymbalRiffTwo[RiffSize] {RiffNote(118, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 250)};
+
+//Cymball Pin 3 Riff
+#define CymbalPin3 8
+RiffNote cymbalRiffThree[RiffSize] {RiffNote(118, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 250)};
 
 //Master Mac Adress
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
@@ -139,31 +163,78 @@ void setup() {
   pinMode(KickPin1, INPUT_PULLUP);
   pinMode(SnarePin1, INPUT_PULLUP);
   pinMode(CymbalPin1, INPUT_PULLUP);
+  pinMode(KickPin2, INPUT_PULLUP);
+  pinMode(SnarePin2, INPUT_PULLUP);
+  pinMode(CymbalPin2, INPUT_PULLUP);
 }
 
 void loop(){
-  if(digitalRead(KickPin1) == LOW){
+  int kp1Read = digitalRead(KickPin1);
+  int sp1Read = digitalRead(SnarePin1);
+  int cp1Read = digitalRead(CymbalPin1);
+
+  int kp2Read = digitalRead(KickPin2);
+  int sp2Read = digitalRead(SnarePin2);
+  int cp2Read = digitalRead(CymbalPin2);
+  
+  if(kp1Read == LOW){
     CancelCalibration();
     
     PlayDrumRiffReturner ret = PlayDrumRiff(kickRiffOne, nextKickRiffNote, lastKickPlayedTime);
     nextKickRiffNote = ret.nextNote;
     lastKickPlayedTime = ret.nextPlayTime;
+
+    SyncPins(kp1Read, sp1Read, cp1Read, kp2Read, sp2Read, cp2Read, ret.nextNote, ret.nextPlayTime);
   }
 
-  if(digitalRead(SnarePin1) == LOW){
+  if(sp1Read == LOW){
     CancelCalibration();
     
     PlayDrumRiffReturner ret = PlayDrumRiff(snareRiffOne, nextSnareRiffNote, lastSnarePlayedTime);
     nextSnareRiffNote = ret.nextNote;
     lastSnarePlayedTime = ret.nextPlayTime;
+
+    SyncPins(kp1Read, sp1Read, cp1Read, kp2Read, sp2Read, cp2Read, ret.nextNote, ret.nextPlayTime);
   }
 
-  if(digitalRead(CymbalPin1) == LOW){
+  if(cp1Read == LOW){
     CancelCalibration();
     
     PlayDrumRiffReturner ret = PlayDrumRiff(cymbalRiffOne, nextCymbalRiffNote, lastCymbalPlayedTime);
     nextCymbalRiffNote = ret.nextNote;
     lastCymbalPlayedTime = ret.nextPlayTime;
+
+    SyncPins(kp1Read, sp1Read, cp1Read, kp2Read, sp2Read, cp2Read, ret.nextNote, ret.nextPlayTime);
+  }
+
+  if(kp2Read == LOW){
+    CancelCalibration();
+    
+    PlayDrumRiffReturner ret = PlayDrumRiff(kickRiffTwo, nextKickRiffNote, lastKickPlayedTime);
+    nextKickRiffNote = ret.nextNote;
+    lastKickPlayedTime = ret.nextPlayTime;
+
+    SyncPins(kp1Read, sp1Read, cp1Read, kp2Read, sp2Read, cp2Read, ret.nextNote, ret.nextPlayTime);
+  }
+  
+  if(sp2Read == LOW){
+    CancelCalibration();
+    
+    PlayDrumRiffReturner ret = PlayDrumRiff(snareRiffTwo, nextSnareRiffNote, lastSnarePlayedTime);
+    nextSnareRiffNote = ret.nextNote;
+    lastSnarePlayedTime = ret.nextPlayTime;
+
+    SyncPins(kp1Read, sp1Read, cp1Read, kp2Read, sp2Read, cp2Read, ret.nextNote, ret.nextPlayTime);
+  }
+
+  if(cp2Read == LOW){
+    CancelCalibration();
+    
+    PlayDrumRiffReturner ret = PlayDrumRiff(cymbalRiffTwo, nextCymbalRiffNote, lastCymbalPlayedTime);
+    nextCymbalRiffNote = ret.nextNote;
+    lastCymbalPlayedTime = ret.nextPlayTime;
+
+    SyncPins(kp1Read, sp1Read, cp1Read, kp2Read, sp2Read, cp2Read, ret.nextNote, ret.nextPlayTime);
   }
 
   //If The Ultrasonic Sensor Can Be Distance Calibrated
@@ -231,6 +302,23 @@ PlayDrumRiffReturner PlayDrumRiff(RiffNote riffArray[], int nextRiffNote, long l
 
   PlayDrumRiffReturner retVal = {nextRiffNote, lastPlayedTime};
   return retVal;
+}
+
+//Keeps The Riffs In Line So They Can Be Played In Sync No Matter The Connection Time
+void SyncPins(int kp1Read, int sp1Read, int cp1Read, int kp2Read, int sp2Read, int cp2Read, int nextNote, long nextPlayTime){
+  //Both Pins Must Be HIGH (Not Connected) Otherwise It'll Be Updated Twice And Then Sends It All Out Of Sync
+  if(kp1Read == HIGH && kp2Read == HIGH){
+    nextKickRiffNote = nextNote;
+    lastKickPlayedTime = nextPlayTime;
+  }
+  if(sp1Read == HIGH && sp2Read == HIGH){
+    nextSnareRiffNote = nextNote;
+    lastSnarePlayedTime = nextPlayTime;
+  }
+  if(cp1Read == HIGH && cp2Read == HIGH){
+    nextCymbalRiffNote = nextNote;
+    lastCymbalPlayedTime = nextPlayTime;
+  }
 }
 
 //Works Out The Distance The US Sensor Can See
