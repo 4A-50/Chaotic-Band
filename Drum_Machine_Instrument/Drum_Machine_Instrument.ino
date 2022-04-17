@@ -53,7 +53,7 @@ struct PlayDrumRiffReturner{
 };
 
 //Max Size For All Riffs
-#define RiffSize 3
+#define RiffSize 4
 
 //Kick Riff Vars
 long lastKickPlayedTime = 0;
@@ -61,15 +61,15 @@ int nextKickRiffNote = 0;
 
 //Kick Pin 1 Riff
 #define KickPin1 5
-RiffNote kickRiffOne[RiffSize] {RiffNote(125, 50, 1, 100), RiffNote(125, 50, 1, 100), RiffNote(124, 50, 1, 250)};
+RiffNote kickRiffOne[RiffSize] {RiffNote(125, 50, 1, 478), RiffNote(125, 50, 1, 478), RiffNote(125, 50, 1, 478), RiffNote(125, 50, 1, 478)};
 
 //Kick Pin 2 Riff
 #define KickPin2 1
-RiffNote kickRiffTwo[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(124, 50, 1, 100), RiffNote(124, 50, 1, 250)};
+RiffNote kickRiffTwo[RiffSize] {RiffNote(125, 50, 1, 329), RiffNote(-1, 50, 1, 329), RiffNote(-1, 50, 1, 329), RiffNote(-1, 50, 1, 329)};
 
 //Kick Pin 3 Riff
 #define KickPin3 10
-RiffNote kickRiffThree[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(124, 50, 1, 100), RiffNote(124, 50, 1, 250)};
+RiffNote kickRiffThree[RiffSize] {RiffNote(117, 50, 1, 188), RiffNote(117, 50, 1, 188), RiffNote(117, 50, 1, 188), RiffNote(117, 50, 1, 188)};
 
 //Snare Riff Vars
 long lastSnarePlayedTime = 0;
@@ -77,15 +77,15 @@ int nextSnareRiffNote = 0;
 
 //Snare Pin 1 Riff
 #define SnarePin1 13
-RiffNote snareRiffOne[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(127, 50, 1, 250)};
+RiffNote snareRiffOne[RiffSize] {RiffNote(117, 50, 1, 478), RiffNote(117, 50, 1, 478), RiffNote(117, 50, 1, 478), RiffNote(117, 50, 1, 478)};
 
 //Snare Pin 2 Riff
 #define SnarePin2 4
-RiffNote snareRiffTwo[RiffSize] {RiffNote(127, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 250)};
+RiffNote snareRiffTwo[RiffSize] {RiffNote(-1, 50, 1, 329), RiffNote(-1, 50, 1, 329), RiffNote(127, 50, 1, 329), RiffNote(-1, 50, 1, 329)};
 
 //Snare Pin 3 Riff
 #define SnarePin3 9
-RiffNote snareRiffThree[RiffSize] {RiffNote(127, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 250)};
+RiffNote snareRiffThree[RiffSize] {RiffNote(-1, 50, 1, 188), RiffNote(-1, 50, 1, 188), RiffNote(127, 50, 1, 188), RiffNote(-1, 50, 1, 188)};
 
 //Cymbal Riff Vars
 long lastCymbalPlayedTime = 0;
@@ -93,15 +93,15 @@ int nextCymbalRiffNote = 0;
 
 //Cymball Pin 1 Riff
 #define CymbalPin1 3
-RiffNote cymbalRiffOne[RiffSize] {RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(123, 50, 1, 250)};
+RiffNote cymbalRiffOne[RiffSize] {RiffNote(123, 50, 1, 478), RiffNote(123, 50, 1, 478), RiffNote(123, 50, 1, 478), RiffNote(123, 50, 1, 478)};
 
 //Cymball Pin 2 Riff
 #define CymbalPin2 2
-RiffNote cymbalRiffTwo[RiffSize] {RiffNote(118, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 250)};
+RiffNote cymbalRiffTwo[RiffSize] {RiffNote(123, 50, 1, 329), RiffNote(123, 50, 1, 329), RiffNote(123, 50, 1, 329), RiffNote(123, 50, 1, 329)};
 
 //Cymball Pin 3 Riff
 #define CymbalPin3 8
-RiffNote cymbalRiffThree[RiffSize] {RiffNote(118, 50, 1, 100), RiffNote(-1, 50, 1, 100), RiffNote(-1, 50, 1, 250)};
+RiffNote cymbalRiffThree[RiffSize] {RiffNote(123, 50, 1, 188), RiffNote(123, 50, 1, 188), RiffNote(-1, 50, 1, 188), RiffNote(123, 50, 1, 188)};
 
 //Master Mac Adress
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
