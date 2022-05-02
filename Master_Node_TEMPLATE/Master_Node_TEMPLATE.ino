@@ -47,8 +47,9 @@ class PlayingNote{
 List<PlayingNote> playingNotes;
 
 //The Instrument Mac Addresses
-#define PEERLength 1
-static Peer PEERS[PEERLength]{Peer(0x42, 0x91, 0x51, 0x51, 0x70, 0x5F)};
+#define PEERLength 2
+static Peer PEERS[PEERLength]{Peer(0x42, 0x91, 0x51, 0x51, 0x70, 0x5F),
+                              Peer(0x5A, 0xBF, 0x25, 0xD7, 0x42, 0x2B)};
 
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
