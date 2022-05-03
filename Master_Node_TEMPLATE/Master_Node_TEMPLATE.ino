@@ -46,6 +46,11 @@ class PlayingNote{
 
 List<PlayingNote> playingNotes;
 
+//The Time At Which The Last Note Was Played
+long lastNoteTime;
+//The State Of The Lights
+bool instLightsOn = false;
+
 //The Instrument Mac Addresses
 #define PEERLength 2
 static Peer PEERS[PEERLength]{Peer(0x42, 0x91, 0x51, 0x51, 0x70, 0x5F),
@@ -102,24 +107,34 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
       }
     }
   }
+  
+  int inNoteVal = noteVal.toInt();
+  int inVelVal = velVal.toInt();
+  int inChanVal = chanVal.toInt();
+  int inTimeVal = timeVal.toInt();
 
-  if(noteVal.toInt() == 500){
-    ActivateLights();
+  if(inNoteVal == 500 && instLightsOn == false){
+    LightControl(true);
 
+    //Set's The MIDI Note To The Correct Value
+    inNoteVal = 53;
+    
     //Plays The MIDI Note
-    MIDI.sendNoteOn(36, velVal.toInt(), chanVal.toInt());
+    MIDI.sendNoteOn(inNoteVal, inVelVal, inChanVal);
+    lastNoteTime = millis();
   }else{
     //Plays The MIDI Note
-    MIDI.sendNoteOn(noteVal.toInt(), velVal.toInt(), chanVal.toInt());
+    MIDI.sendNoteOn(inNoteVal, inVelVal, inChanVal);
+    lastNoteTime = millis();
   }
 
   //If The Note Has An Off Time
-  if(timeVal.toInt() > 0){
+  if(inTimeVal > 0){
     //Works Out The Off Time From Current Time
-    timeVal = String(millis() + timeVal.toInt());
+    inTimeVal = millis() + inTimeVal;
 
     //Adds The Note To The List
-    PlayingNote newNote = PlayingNote(noteVal.toInt(), timeVal.toInt(), chanVal.toInt());
+    PlayingNote newNote = PlayingNote(inNoteVal, inTimeVal, inChanVal);
     playingNotes.add(newNote);
   }
 }
@@ -167,14 +182,27 @@ void loop(){
       }
     }
   }
+
+  //Checks To See If The Lights Should Be Turned Off
+  if(lastNoteTime + 30000 < millis() && instLightsOn == true){
+    LightControl(false);
+  }
 }
 
 //Sends A Message To All Instruments To Light Up
-void ActivateLights(){
+void LightControl(bool onOff){
   //Creates A Buffer With A Size Of 60
   char msg[60];
   //Writes The Info To Buffer Whilst Getting It's Size
-  int len = snprintf(msg, sizeof(msg), "Light_On");
+  if(onOff == true){
+    int len = snprintf(msg, sizeof(msg), "Light_On");
+    
+    instLightsOn = true;
+  }else{
+    int len = snprintf(msg, sizeof(msg), "Light_Off");
+    
+    instLightsOn = false;
+  }
 
   //Loops Through All The PEER MAC Adresses
   for(int i = 0; i < PEERLength; i++){

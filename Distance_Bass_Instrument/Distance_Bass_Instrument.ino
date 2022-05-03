@@ -11,6 +11,9 @@
 //EEPROM Libary To Save Data To The EEPROM
 #include <ESP_EEPROM.h>
 
+//Relay Pins
+#define RelayPin 0
+
 //Ultrasonic Sensor Pins
 const int trigPin = 12;
 const int echoPin = 14;
@@ -76,7 +79,10 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
   }
 
   if(message == "Light_On"){
-    //Turn The LEDS ON
+    digitalWrite(RelayPin, HIGH);
+  }
+  if(message == "Lights_Off"){
+    digitalWrite(RelayPin, LOW);
   }
 }
 
@@ -112,6 +118,9 @@ void setup() {
   }
 
   lastDistance = maxLength;
+
+  //Relay Pin Setup
+  pinMode(RelayPin, OUTPUT);
 
   //Ultrasonic Pin Setup
   pinMode(trigPin, OUTPUT);

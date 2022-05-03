@@ -8,6 +8,9 @@
   #include <WiFi.h>
 #endif
 
+//Relay Pins
+#define RelayPin 0
+
 //Master Mac Adress
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
 
@@ -22,14 +25,14 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
   }
 
   if(message == "Light_On"){
-    //Turn The LEDS ON
+    digitalWrite(RelayPin, HIGH);
+  }
+  if(message == "Lights_Off"){
+    digitalWrite(RelayPin, LOW);
   }
 }
 
 void setup() {
-  //Sets Up The Onboard LED & PIR Pin
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(pirPin, INPUT);
   Serial.begin(9600);
 
   WiFi.persistent(false);
@@ -51,6 +54,9 @@ void setup() {
     Serial.println("WifiEspNow.addPeer() failed");
     ESP.restart();
   }
+
+  //Relay Pin Setup
+  pinMode(RelayPin, OUTPUT);
 }
 
 void loop(){
