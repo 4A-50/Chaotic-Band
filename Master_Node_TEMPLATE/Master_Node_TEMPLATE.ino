@@ -53,8 +53,9 @@ bool instLightsOn = false;
 
 //The Instrument Mac Addresses
 #define PEERLength 2
-static Peer PEERS[PEERLength]{Peer(0x42, 0x91, 0x51, 0x51, 0x70, 0x5F),
-                              Peer(0x5A, 0xBF, 0x25, 0xD7, 0x42, 0x2B)};
+static Peer PEERS[PEERLength]{Peer(0x42, 0x91, 0x51, 0x51, 0x70, 0x5F), //Drum Machine
+                              Peer(0x5A, 0xBF, 0x25, 0xD7, 0x42, 0x2B), //Distance Bass
+                              Peer(0x42, 0x91, 0x51, 0x44, 0x92, 0x74)}; //Motion Sensor
 
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){

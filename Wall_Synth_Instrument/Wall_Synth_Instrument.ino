@@ -8,17 +8,17 @@
   #include <WiFi.h>
 #endif
 
+//Capacitive Touch Libary
+#include <CapacitiveSensor.h>
+
 //Relay Pins
 #define RelayPin 0
 
+//680k resistor between pins 16 & 5, pin 5 is sensor pin
+CapacitiveSensor   cs1 = CapacitiveSensor(16,5);
+
 //Master Mac Adress
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
-
-//PIR PIN
-int pirPin = 5;
-
-//Time Since Last Motion Detected
-long lastMotionTime = 0;
 
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
@@ -39,9 +39,6 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
 }
 
 void setup() {
-  //Sets Up The Onboard LED & PIR Pin
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(pirPin, INPUT);
   Serial.begin(9600);
 
   WiFi.persistent(false);
@@ -69,17 +66,11 @@ void setup() {
 }
 
 void loop(){
-  //Checks If Motion Has Been Detected And That It Has Been Enough Time Since The Last Reading
-  if (digitalRead(pirPin) == HIGH && millis() - lastMotionTime > 10000) {
-    //Prints To Serial And Sends A MSG To Master
-    SendMIDIMSG(500, 127, 3, 2000);
-
-    //Sets The Current Time To The Last Time
-    lastMotionTime = millis();
-  }
+  //Sensor Input
+  long input1 = cs1.capacitiveSensor(30);
 }
 
-//Sends A Message To The Master That It's Sensed Movement
+//Sends A Message To The Master
 void SendMIDIMSG(int note, int velocity, int mChannel, int playTime){
   //Creates A Buffer With A Size Of 60
   char msg[60];

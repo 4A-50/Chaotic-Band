@@ -41,6 +41,8 @@ int maxLength = 30;
 #define PotPin A0
 //BPM LED Pin
 #define BPMLEDPin 13
+//Divebomb Button Pin
+#define DivebombPin 14
 
 //Dry Sound MIDI Range
 int dryStart = 115;
@@ -64,6 +66,8 @@ int lastBPM;
 int BPMLEDState = LOW;
 //Last Time The BPM LED Changed State
 long lastBPMLEDTime;
+//Last Time The Divebomb Button Was Press
+long lastDivebombTime;
 
 //Master Mac Adress
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
@@ -135,6 +139,9 @@ void setup() {
 
   //BPM LED Pin Setup
   pinMode(BPMLEDPin, OUTPUT);
+
+  //Divebomb Button Pin Setups
+  pinMode(DivebombPin, INPUT_PULLUP);
 }
 
 void loop(){
@@ -143,6 +150,19 @@ void loop(){
   int currentRawArpVal = analogRead(PotPin);
   int currentBPM = int(map(currentRawArpVal, 5, 1024, 150, 90));
   int currentArpPinState = digitalRead(ArpPin);
+
+  //If The Divebomb Button Has Been Pressed
+  if(digitalRead(DivebombPin) == LOW && lastDivebombTime + 2500 < millis()){
+    //Checks If It's Playing The Dry Or Fuzz Signal
+    if(digitalRead(FuzzPin) == LOW){
+      SendMIDIMSG(fuzzDivebomb, 127, 1, 500);
+    }else{
+      SendMIDIMSG(dryDivebomb, 127, 1, 500);
+    }
+
+    //Sets The Last Divebomb Time To The Current Millis
+    lastDivebombTime = millis();
+  }
 
   //Flashes An LED At The Correct BPM Provided By The Pot (Via A Remap To A 90-150 BPM Range)
   if(lastBPMLEDTime + (60000 / currentBPM) < millis()){
@@ -153,14 +173,14 @@ void loop(){
     digitalWrite(BPMLEDPin, BPMLEDState);
 
     //Checks The Arpeggator Is Active
-    if(currentArpPinState == LOW && currentMIDI != -1){
+    if(currentArpPinState == LOW && currentMIDI != -1 && lastDivebombTime + 2500 < millis()){
       SendMIDIMSG(currentMIDI, 127, 1, 500);
       lastSendTime = millis();
     }
   }
 
-  //If The US Sensor Detects A Distance Change
-  if(currentDist != lastDistance && lastSendTime + 250 < millis()){
+  //If The US Sensor Detects A Distance Change, And It's Been 1/4 Of A Second (To Stop Spam), And If It's Not Currently Divebombing
+  if(currentDist != lastDistance && lastSendTime + 250 < millis() && lastDivebombTime + 2500 < millis()){
     //If The Current Distance Is Within The "Fret Board" Range
     if(currentDist <= maxLength){
       //Checks Weather It's Playing The Dry Or Fuzz Signal
