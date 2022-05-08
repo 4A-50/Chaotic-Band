@@ -15,10 +15,16 @@
 #define RelayPin 0
 
 //680k resistor between pins 16 & 5, pin 5 is sensor pin
-CapacitiveSensor   cs1 = CapacitiveSensor(16,5);
+CapacitiveSensor cs1 = CapacitiveSensor(16,5);
 
 //Master Mac Adress
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
+
+//If A Note Is Being Played
+bool playing = false;
+
+//The Amount Needed To Count As A 'Detection'
+int dectAmount = 10000;
 
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
@@ -68,6 +74,18 @@ void setup() {
 void loop(){
   //Sensor Input
   long input1 = cs1.capacitiveSensor(30);
+
+  if(input1 < dectAmount && playing == false){
+    SendMIDIMSG(32, 127, 2, 0);
+    playing = true;
+  }
+
+  if(input1 > dectAmount && playing == true){
+    SendMIDIMSG(32, 0, 2, 0);
+    playing = false;
+  }
+
+  delay(250);
 }
 
 //Sends A Message To The Master
