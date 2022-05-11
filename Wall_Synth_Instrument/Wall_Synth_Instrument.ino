@@ -16,12 +16,35 @@
 
 //680k resistor between pins 16 & 5, pin 5 is sensor pin
 CapacitiveSensor cs1 = CapacitiveSensor(16,5);
+//680k resistor between pins 16 & 4, pin 4 is sensor pin
+CapacitiveSensor cs2 = CapacitiveSensor(16,4);
+//680k resistor between pins 16 & 14, pin 14 is sensor pin
+CapacitiveSensor cs3 = CapacitiveSensor(16,14);
+//680k resistor between pins 16 & 12, pin 12 is sensor pin
+CapacitiveSensor cs4 = CapacitiveSensor(16,12);
+//680k resistor between pins 16 & 13, pin 13 is sensor pin
+CapacitiveSensor cs5 = CapacitiveSensor(16,13);
+//680k resistor between pins 16 & 15, pin 15 is sensor pin
+CapacitiveSensor cs6 = CapacitiveSensor(16,15);
 
 //Master Mac Adress
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
 
 //If A Note Is Being Played
-bool playing = false;
+bool playing[6] = {false,
+                   false,
+                   false,
+                   false,
+                   false,
+                   false};
+                   
+//The Notes To Play
+int notes[6] = {32,
+                33,
+                34,
+                35,
+                36,
+                37};
 
 //The Amount Needed To Count As A 'Detection'
 int dectAmount = 10000;
@@ -72,20 +95,28 @@ void setup() {
 }
 
 void loop(){
-  //Sensor Input
-  long input1 = cs1.capacitiveSensor(30);
-
-  if(input1 < dectAmount && playing == false){
-    SendMIDIMSG(32, 127, 2, 0);
-    playing = true;
-  }
-
-  if(input1 > dectAmount && playing == true){
-    SendMIDIMSG(32, 0, 2, 0);
-    playing = false;
-  }
+  //Checks If The Pads Should Be Playing A Note
+  CheckPlaying(cs1.capacitiveSensor(30), 0);
+  CheckPlaying(cs2.capacitiveSensor(30), 1);
+  CheckPlaying(cs3.capacitiveSensor(30), 2);
+  CheckPlaying(cs4.capacitiveSensor(30), 3);
+  CheckPlaying(cs5.capacitiveSensor(30), 4);
+  CheckPlaying(cs6.capacitiveSensor(30), 5);
 
   delay(250);
+}
+
+//Checks If The Provided Senesor Should Be Playing Due To Its Capactance
+void CheckPlaying(long sensIn, int sensID){
+  if(sensIn < dectAmount && playing[sensID] == false){
+    SendMIDIMSG(notes[sensID], 127, 2, 0);
+    playing[sensID] = true;
+  }
+
+  if(sensIn > dectAmount && playing[sensID] == true){
+    SendMIDIMSG(notes[sensID], 0, 2, 0);
+    playing[sensID] = false;
+  }
 }
 
 //Sends A Message To The Master
