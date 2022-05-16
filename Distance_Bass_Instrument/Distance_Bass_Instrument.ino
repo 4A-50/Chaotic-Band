@@ -42,7 +42,7 @@ int maxLength = 30;
 //BPM LED Pin
 #define BPMLEDPin 13
 //Divebomb Button Pin
-#define DivebombPin 14
+#define DivebombPin 3
 
 //Dry Sound MIDI Range
 int dryStart = 115;
@@ -125,6 +125,7 @@ void setup() {
 
   //Relay Pin Setup
   pinMode(RelayPin, OUTPUT);
+  digitalWrite(RelayPin, LOW);
 
   //Ultrasonic Pin Setup
   pinMode(trigPin, OUTPUT);

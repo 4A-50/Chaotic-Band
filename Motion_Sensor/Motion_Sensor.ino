@@ -66,6 +66,7 @@ void setup() {
 
   //Relay Pin Setup
   pinMode(RelayPin, OUTPUT);
+  digitalWrite(RelayPin, LOW);
 }
 
 void loop(){

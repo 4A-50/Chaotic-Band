@@ -18,8 +18,8 @@
 #define RelayPin 0
 
 //Ultrasonic Sensor Pins
-const int trigPin = 12;
-const int echoPin = 14;
+const int trigPin = 1;
+const int echoPin = 3;
 
 //The Speed Of Sound
 #define SOUND_VELOCITY 0.034
@@ -66,8 +66,8 @@ char keys[ROWS][COLS] = {{'0','1','2'},
                          {'3','4','5'},
                          {'6','7','8'}};
                          
-byte rowPins[ROWS] = {5, 1, 13};
-byte colPins[COLS] = {4, 3, 2};
+byte rowPins[ROWS] = {5, 4, 2};
+byte colPins[COLS] = {14, 12, 13};
 
 Keypad kpd = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
@@ -178,6 +178,7 @@ void setup() {
 
   //Relay Pin Setup
   pinMode(RelayPin, OUTPUT);
+  digitalWrite(RelayPin, LOW);
 
   //Ultrasonic Pin Setup
   pinMode(trigPin, OUTPUT);
