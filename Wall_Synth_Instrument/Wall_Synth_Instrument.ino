@@ -14,17 +14,17 @@
 //Relay Pins
 #define RelayPin 0
 
-//680k resistor between pins 16 & 5, pin 5 is sensor pin
+//330k resistor between pins 16 & 5, pin 5 is sensor pin
 CapacitiveSensor cs1 = CapacitiveSensor(16,5);
-//680k resistor between pins 16 & 4, pin 4 is sensor pin
+//330k resistor between pins 16 & 4, pin 4 is sensor pin
 CapacitiveSensor cs2 = CapacitiveSensor(16,4);
-//680k resistor between pins 16 & 14, pin 14 is sensor pin
+//330k resistor between pins 16 & 14, pin 14 is sensor pin
 CapacitiveSensor cs3 = CapacitiveSensor(16,14);
-//680k resistor between pins 16 & 12, pin 12 is sensor pin
+//330k resistor between pins 16 & 12, pin 12 is sensor pin
 CapacitiveSensor cs4 = CapacitiveSensor(16,12);
-//680k resistor between pins 16 & 13, pin 13 is sensor pin
+//330k resistor between pins 16 & 13, pin 13 is sensor pin
 CapacitiveSensor cs5 = CapacitiveSensor(16,13);
-//680k resistor between pins 16 & 15, pin 15 is sensor pin
+//330k resistor between pins 16 & 15, pin 15 is sensor pin
 CapacitiveSensor cs6 = CapacitiveSensor(16,15);
 
 //Master Mac Adress
@@ -39,15 +39,28 @@ bool playing[6] = {false,
                    false};
                    
 //The Notes To Play
-int notes[6] = {32,
+int notes[6] = {60,
+                50,
+                41,
+                38,
                 33,
-                34,
-                35,
-                36,
-                37};
+                28};
 
 //The Amount Needed To Count As A 'Detection'
-int dectAmount = 10000;
+int dectAmount[6] = {3000,
+                     5000,
+                     4000,
+                     4000,
+                     5000,
+                     3000};
+
+//The Last Recorded Reading (Used For The Web Calibator)
+int lastReading[6] = {0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0};
 
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
@@ -60,10 +73,10 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
   }
 
   if(message == "Light_On"){
-    digitalWrite(RelayPin, HIGH);
+    digitalWrite(RelayPin, LOW);
   }
   if(message == "Lights_Off"){
-    digitalWrite(RelayPin, LOW);
+    digitalWrite(RelayPin, HIGH);
   }
 }
 
@@ -92,7 +105,14 @@ void setup() {
 
   //Relay Pin Setup
   pinMode(RelayPin, OUTPUT);
-  digitalWrite(RelayPin, LOW);
+  digitalWrite(RelayPin, HIGH);
+  
+  cs1.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  cs2.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  cs3.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  cs4.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  cs5.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  cs6.set_CS_AutocaL_Millis(0xFFFFFFFF);
 }
 
 void loop(){
@@ -109,15 +129,43 @@ void loop(){
 
 //Checks If The Provided Senesor Should Be Playing Due To Its Capactance
 void CheckPlaying(long sensIn, int sensID){
-  if(sensIn < dectAmount && playing[sensID] == false){
-    SendMIDIMSG(notes[sensID], 127, 2, 0);
-    playing[sensID] = true;
-  }
+  Serial.print(sensIn);
+  Serial.print("  |  ");
+  Serial.println(sensID + 1);
 
-  if(sensIn > dectAmount && playing[sensID] == true){
-    SendMIDIMSG(notes[sensID], 0, 2, 0);
-    playing[sensID] = false;
+  lastReading[sensID] = sensIn;
+
+  //For Some Reason The 6th Pad (Array ID 5) Is Inverted So It's Value Is High Until Touched Where It Dips
+  if(sensID == 5){
+    if(sensIn < dectAmount[sensID] && playing[sensID] == false){
+      Serial.println("Starting MIDI From Pad" + String(sensID + 1));
+      SendMIDIMSG(notes[sensID], 127, 2, 0);
+      playing[sensID] = true;
+    }
+  
+    if(sensIn > dectAmount[sensID] && playing[sensID] == true){
+      Serial.println("Ending MIDI From Pad" + String(sensID + 1));
+      SendMIDIMSG(notes[sensID], 0, 2, 0);
+      playing[sensID] = false;
+    }
+  }else{
+    if(sensIn > dectAmount[sensID] && playing[sensID] == false){
+      Serial.println("Starting MIDI From Pad" + String(sensID + 1));
+      SendMIDIMSG(notes[sensID], 127, 2, 0);
+      playing[sensID] = true;
+    }
+  
+    if(sensIn < dectAmount[sensID] && playing[sensID] == true){
+      Serial.println("Ending MIDI From Pad" + String(sensID + 1));
+      SendMIDIMSG(notes[sensID], 0, 2, 0);
+      playing[sensID] = false;
+    }
   }
+}
+
+//Turns The Last Read Values To A String
+String getPadValues(){
+  return String(lastReading[0]) + " " + String(lastReading[1]) + " " + String(lastReading[2]) + " " + String(lastReading[3]) + " " + String(lastReading[4]) + " " + String(lastReading[5]);
 }
 
 //Sends A Message To The Master

@@ -52,11 +52,11 @@ long lastNoteTime;
 bool instLightsOn = false;
 
 //The Instrument Mac Addresses
-#define PEERLength 2
-static Peer PEERS[PEERLength]{Peer(0x42, 0x91, 0x51, 0x51, 0x70, 0x5F), //Drum Machine
-                              Peer(0x5A, 0xBF, 0x25, 0xD7, 0x42, 0x2B), //Distance Bass
-                              Peer(0x42, 0x91, 0x51, 0x44, 0x92, 0x74), //Motion Sensor
-                              Peer(0x42, 0x91, 0x51, 0x51, 0xB5, 0x0C)};//Wall Synth
+#define PEERLength 4
+static Peer PEERS[PEERLength]{Peer(0x42, 0x91, 0x51, 0x51, 0x70, 0x5F),  //Drum Machine
+                              Peer(0x5A, 0xBF, 0x25, 0xD7, 0x42, 0x2B),  //Distance Bass
+                              Peer(0x42, 0x91, 0x51, 0x44, 0x92, 0x74),  //Motion Sensor
+                              Peer(0x42, 0x91, 0x51, 0x51, 0xB5, 0x0C)}; //Wall Synth
 
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
@@ -115,9 +115,12 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
   int inChanVal = chanVal.toInt();
   int inTimeVal = timeVal.toInt();
 
-  if(inNoteVal == 500 && instLightsOn == false){
+  //Makes More Sense To Turn The Lights On If Any Instrument Starts Playing
+  if(instLightsOn == false){
     LightControl(true);
+  }
 
+  if(inNoteVal == 500){
     //Set's The MIDI Note To The Correct Value
     inNoteVal = 53;
     
@@ -195,13 +198,16 @@ void loop(){
 void LightControl(bool onOff){
   //Creates A Buffer With A Size Of 60
   char msg[60];
+
+    int len;
+  
   //Writes The Info To Buffer Whilst Getting It's Size
   if(onOff == true){
-    int len = snprintf(msg, sizeof(msg), "Light_On");
+    len = snprintf(msg, sizeof(msg), "Light_On");
     
     instLightsOn = true;
   }else{
-    int len = snprintf(msg, sizeof(msg), "Light_Off");
+    len = snprintf(msg, sizeof(msg), "Light_Off");
     
     instLightsOn = false;
   }

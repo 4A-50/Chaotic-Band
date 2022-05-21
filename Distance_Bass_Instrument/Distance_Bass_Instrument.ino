@@ -83,10 +83,10 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
   }
 
   if(message == "Light_On"){
-    digitalWrite(RelayPin, HIGH);
+    digitalWrite(RelayPin, LOW);
   }
   if(message == "Lights_Off"){
-    digitalWrite(RelayPin, LOW);
+    digitalWrite(RelayPin, HIGH);
   }
 }
 
@@ -125,7 +125,7 @@ void setup() {
 
   //Relay Pin Setup
   pinMode(RelayPin, OUTPUT);
-  digitalWrite(RelayPin, LOW);
+  digitalWrite(RelayPin, HIGH);
 
   //Ultrasonic Pin Setup
   pinMode(trigPin, OUTPUT);

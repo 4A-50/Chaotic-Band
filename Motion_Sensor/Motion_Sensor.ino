@@ -31,10 +31,10 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
   }
 
   if(message == "Light_On"){
-    digitalWrite(RelayPin, HIGH);
+    digitalWrite(RelayPin, LOW);
   }
   if(message == "Lights_Off"){
-    digitalWrite(RelayPin, LOW);
+    digitalWrite(RelayPin, HIGH);
   }
 }
 
@@ -66,12 +66,13 @@ void setup() {
 
   //Relay Pin Setup
   pinMode(RelayPin, OUTPUT);
-  digitalWrite(RelayPin, LOW);
+  digitalWrite(RelayPin, HIGH);
 }
 
 void loop(){
   //Checks If Motion Has Been Detected And That It Has Been Enough Time Since The Last Reading
   if (digitalRead(pirPin) == HIGH && millis() - lastMotionTime > 10000) {
+    Serial.println("I See Movement");
     //Prints To Serial And Sends A MSG To Master
     SendMIDIMSG(500, 127, 3, 2000);
 

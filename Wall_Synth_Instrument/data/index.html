@@ -1,0 +1,35 @@
+<!DOCTYPE HTML><html>
+<html lang="en">
+    <head>
+        <title>Wall Synth</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <h2>Pad Readings</h2>
+        <p id="pad0"></p>
+        <p id="pad1"></p>
+        <p id="pad2"></p>
+        <p id="pad3"></p>
+        <p id="pad4"></p>
+        <p id="pad5"></p>
+    </body>
+
+    <script>
+        setInterval(function(){
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function(){
+                if (this.readyState == 4 && this.status == 200){
+                    let text = this.responseText;
+                    //let text = "1500 5600 340 5000 6700 1234"
+                    const valArray = text.split(" ");
+                    
+                    for (let i = 0; i < 6; i++) {
+                        document.getElementById("pad" + i.toString()).innerHTML = valArray[i];
+                    }
+                }
+            };
+            xhttp.open("GET", "/padreadings", true);
+            xhttp.send();
+        }, 500);
+    </script>
+</html>

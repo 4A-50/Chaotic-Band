@@ -18,8 +18,8 @@
 #define RelayPin 0
 
 //Ultrasonic Sensor Pins
-const int trigPin = 1;
-const int echoPin = 3;
+const int trigPin = 3;
+const int echoPin = 15;
 
 //The Speed Of Sound
 #define SOUND_VELOCITY 0.034
@@ -189,11 +189,11 @@ void setup() {
 }
 
 void loop(){
-  if (kpd.getKeys()){
-    for (int i=0; i<LIST_MAX; i++){
+  if(kpd.getKeys()){
+    for(int i = 0; i < LIST_MAX; i++){
       Serial.println(kpd.key[i].kchar);
-      if (kpd.key[i].stateChanged){
-        switch (kpd.key[i].kstate){
+      if(kpd.key[i].stateChanged){
+        switch(kpd.key[i].kstate){
           case PRESSED:
             keyReadStates[kpd.key[i].kchar - '0'] = LOW;
             break;
