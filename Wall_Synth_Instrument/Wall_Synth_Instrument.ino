@@ -1,15 +1,22 @@
-//WIFI ESP NOW Libary
+//WIFI ESP NOW Library
 #include <WifiEspNow.h>
 
-//Picks The Right WIFI Libary For ESP Architecture
+//Picks The Right WIFI Library For ESP Architecture
 #if defined(ARDUINO_ARCH_ESP8266)
   #include <ESP8266WiFi.h>
 #elif defined(ARDUINO_ARCH_ESP32)
   #include <WiFi.h>
 #endif
 
-//Capacitive Touch Libary
+//Capacitive Touch Library
 #include <CapacitiveSensor.h>
+
+//The Async Web Librarys
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+
+//EEPROM Libary To Save Data To The EEPROM
+#include <ESP_EEPROM.h>
 
 //Relay Pins
 #define RelayPin 0
@@ -62,13 +69,16 @@ int lastReading[6] = {0,
                       0,
                       0};
 
+//Web Server Object
+AsyncWebServer server(80);
+
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
   //Message Holder
   String message = "";
 
   //Loops Though All The Messages Data
-  for (int i = 0; i < static_cast<int>(count); ++i) {
+  for(int i = 0; i < static_cast<int>(count); ++i) {
     message += static_cast<char>(buf[i]);
   }
 
@@ -82,12 +92,10 @@ void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size
 
 void setup() {
   Serial.begin(9600);
-
-  WiFi.persistent(false);
+  
   WiFi.mode(WIFI_AP);
   WiFi.disconnect();
-  WiFi.softAP("ESPNOW", nullptr, 3);
-  WiFi.softAPdisconnect(false);
+  WiFi.softAP("WallSynth", "WallSynth", 3);
 
  bool ok = WifiEspNow.begin();
   if (!ok) {
@@ -102,6 +110,48 @@ void setup() {
     Serial.println("WifiEspNow.addPeer() failed");
     ESP.restart();
   }
+
+  //Starts The EEPROM With A Size OF 24 Bytes (6 * 4(Int))
+  EEPROM.begin(24);
+
+  //Check The EEPROM For Data
+  if(EEPROM.percentUsed() > 0){
+    //Fills The Thresholds With The Saved Data
+    for(int i = 0; i < 6; i++) {
+      EEPROM.get(i * 4, dectAmount[i]);
+    }
+  }
+
+  //Sets Up The Index Page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/index.html");
+  });
+
+  //Sets Up The Page To Pull Pad Data
+  server.on("/padreadings", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/plain", getPadValues().c_str());
+  });
+
+  //Sets Up The Page To Recive New Pad Thresholds
+  server.on("/update", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    for(int i = 0; i < 6; i++) {
+      if(request->hasParam("padIn" + String(i))){
+        String getVal = request->getParam("padIn" + String(i))->value();
+        dectAmount[i] = getVal.toInt();
+
+        EEPROM.put(i * 4, dectAmount[i]);
+      }
+    }
+
+    boolean ok1 = EEPROM.commit();
+    Serial.println((ok1) ? "First commit OK" : "Commit failed");
+    
+    request->send(200, "text/plain", "OK");
+  });
+
+
+  // Start server
+  server.begin();
 
   //Relay Pin Setup
   pinMode(RelayPin, OUTPUT);
