@@ -38,12 +38,12 @@ CapacitiveSensor cs6 = CapacitiveSensor(16,15);
 static uint8_t MASTERMAC[]{0x42, 0x91, 0x51, 0x46, 0x34, 0xFD};
 
 //If A Note Is Being Played
-bool playing[6] = {false,
-                   false,
-                   false,
-                   false,
-                   false,
-                   false};
+long playing[6] = {0,
+                   0,
+                   0,
+                   0,
+                   0,
+                   0};
                    
 //The Notes To Play
 int notes[6] = {60,
@@ -71,6 +71,76 @@ int lastReading[6] = {0,
 
 //Web Server Object
 AsyncWebServer server(80);
+
+//Website Code Due To SPIFF Not Working
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html>
+<html lang="en">
+    <head style="text-align: center;">
+        <title>Wall Synth</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <style>
+        body{
+          margin-left: auto;
+          margin-right: auto;
+          text-align: center;
+        }
+    </style>
+
+    <body>
+        <h2>Pad Readings</h2>
+        <p id="pad0"></p>
+        <p id="pad1"></p>
+        <p id="pad2"></p>
+        <p id="pad3"></p>
+        <p id="pad4"></p>
+        <p id="pad5"></p>
+
+        <h2>Set Pad Thresholds</h2>
+        <form action='/update' method='GET'>
+            <label for="padIn0">Pad 1 Threshold:</label>
+            <input type="number" id="padIn0" name="padIn0" min="0">
+            <br/>
+            <label for="padIn1">Pad 2 Threshold:</label>
+            <input type="number" id="padIn1" name="padIn1" min="0">
+            <br/>
+            <label for="padIn2">Pad 3 Threshold:</label>
+            <input type="number" id="padIn2" name="padIn2" min="0">
+            <br/>
+            <label for="padIn3">Pad 4 Threshold:</label>
+            <input type="number" id="padIn3" name="padIn3" min="0">
+            <br/>
+            <label for="padIn4">Pad 5 Threshold:</label>
+            <input type="number" id="padIn4" name="padIn4" min="0">
+            <br/>
+            <label for="padIn4">Pad 6 Threshold:</label>
+            <input type="number" id="padIn4" name="padIn4" min="0">
+            <br/><br/>
+            <input type="submit">
+        </form>
+    </body>
+
+    <script>
+        setInterval(function(){
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function(){
+                if(this.readyState == 4 && this.status == 200){
+                    let text = this.responseText;
+                    //let text = "1500 5600 340 5000 6700 1234"
+                    const valArray = text.split(" ");
+                    
+                    for(let i = 0; i < 6; i++) {
+                        document.getElementById("pad" + i.toString()).innerHTML = "Pad " + (i + 1) + ": " + valArray[i];
+                    }
+                }
+            };
+            xhttp.open("GET", "/padreadings", true);
+            xhttp.send();
+        }, 500);
+    </script>
+</html>)rawliteral";
 
 //Decodes The Incoming Message And Plays The Correct MIDI Info
 void MessageDecoder(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg){
@@ -124,7 +194,7 @@ void setup() {
 
   //Sets Up The Index Page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/index.html");
+    request->send_P(200, "text/html", index_html);
   });
 
   //Sets Up The Page To Pull Pad Data
@@ -187,28 +257,16 @@ void CheckPlaying(long sensIn, int sensID){
 
   //For Some Reason The 6th Pad (Array ID 5) Is Inverted So It's Value Is High Until Touched Where It Dips
   if(sensID == 5){
-    if(sensIn < dectAmount[sensID] && playing[sensID] == false){
+    if(sensIn < dectAmount[sensID] && millis() >= playing[sensID] + 250){
       Serial.println("Starting MIDI From Pad" + String(sensID + 1));
-      SendMIDIMSG(notes[sensID], 127, 2, 0);
-      playing[sensID] = true;
-    }
-  
-    if(sensIn > dectAmount[sensID] && playing[sensID] == true){
-      Serial.println("Ending MIDI From Pad" + String(sensID + 1));
-      SendMIDIMSG(notes[sensID], 0, 2, 0);
-      playing[sensID] = false;
+      SendMIDIMSG(notes[sensID], 127, 2, 250);
+      playing[sensID] = millis();
     }
   }else{
-    if(sensIn > dectAmount[sensID] && playing[sensID] == false){
+    if(sensIn > dectAmount[sensID] && millis() >= playing[sensID] + 250){
       Serial.println("Starting MIDI From Pad" + String(sensID + 1));
-      SendMIDIMSG(notes[sensID], 127, 2, 0);
-      playing[sensID] = true;
-    }
-  
-    if(sensIn < dectAmount[sensID] && playing[sensID] == true){
-      Serial.println("Ending MIDI From Pad" + String(sensID + 1));
-      SendMIDIMSG(notes[sensID], 0, 2, 0);
-      playing[sensID] = false;
+      SendMIDIMSG(notes[sensID], 127, 2, 250);
+      playing[sensID] = millis();
     }
   }
 }
